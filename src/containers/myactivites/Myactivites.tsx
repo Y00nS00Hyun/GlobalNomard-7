@@ -1,5 +1,6 @@
 'use client';
 
+import axiosInstance from '@/services/axios';
 import MenuDropDown from '@/components/Dropdown/MenuDropdown';
 import ReservationCard from '@/components/myreservations';
 import { ActivitiesData, IActivity } from '@/types/activity';
@@ -9,6 +10,8 @@ import { useInfiniteQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useEffect } from 'react';
 import { useInView } from 'react-intersection-observer';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { useRouter } from 'next/router';
 
 function MyActivities() {
   const { ref, inView } = useInView();
@@ -37,6 +40,32 @@ function MyActivities() {
       return undefined;
     },
   });
+
+  const router = useRouter();
+  const { id } = router.query;
+
+  const deleteActivity = async (id: any) => {
+    const response = await axiosInstance.delete(`/my-activities/${id}`);
+    return response.data;
+  };
+
+  const deleteMutation = useMutation({
+    mutationFn: () => deleteActivity(id),
+    onSuccess: () => {
+      alert('성공');
+    },
+    onError: () => {
+      alert('실패');
+    },
+  });
+
+  const handleDelete = () => {
+    deleteMutation.mutate();
+  };
+
+  const handleEdit = () => {
+    router.push(`/register`);
+  };
 
   useEffect(() => {
     if (inView && hasNextPage) {
@@ -79,7 +108,11 @@ function MyActivities() {
               getRating={(activity: IActivity) => activity.rating}
               getReviewCount={(activity: IActivity) => activity.reviewCount}
               getPrice={(activity: IActivity) => activity.price}
-            ></ReservationCard>
+            >
+              {(_reservation: IActivity) => (
+                <MenuDropDown onDelete={handleDelete} onEdit={handleEdit} />
+              )}
+            </ReservationCard>
           ))
         )}
       </div>
